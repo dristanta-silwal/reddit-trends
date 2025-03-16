@@ -1,18 +1,25 @@
 # Reddit Trends - Flask App
 Reddit Trends is a web application built with Flask that allows users to fetch and display trending posts from various subreddits. Users can also receive email alerts with the latest trending posts.
 
+# Demo
+<p align="left">
+  <a href="media/reddit-trends-demo.mp4">
+    <img src="media/bg_img.png" alt="Reddit Trends Demo" width="600">
+  </a>
+</p>
+
 ## Overview
 This is a Flask-based web application that:
 - **Fetches trending posts** from selected subreddits using the **Reddit API**.
 - **Displays trending posts** on the dashboard.
 - **Allows users to send email alerts** containing trending Reddit posts to specified email addresses.
 - Uses **Flask-Mail** for email notifications.
-- Uses **SQLite** for storing Reddit posts.
+- Uses **SQLite** for storing Reddit posts and subreddits.
 - Implements **OAuth2 authentication** with Reddit.
 
 ## Features
 - User authentication with Reddit OAuth  
-- Fetches trending posts from **technology, worldnews, investing, and cryptocurrency** subreddits  
+- Fetches trending posts from subreddits using dynamic search (adding and removing)  
 - Sends email alerts dynamically to user-specified email addresses  
 - Uses **dotenv** to protect API credentials  
 - Supports debugging and testing with **Postman**  

@@ -29,15 +29,6 @@ app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL") == "True"
 mail = Mail(app)
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-
 def get_db_connection():
     conn = sqlite3.connect("trending_posts.db")
     conn.row_factory = sqlite3.Row
@@ -45,6 +36,7 @@ def get_db_connection():
 
 def create_table():
     conn = get_db_connection()
+    cursor = conn.cursor()
     conn.execute(
         """CREATE TABLE IF NOT EXISTS posts (
             id TEXT PRIMARY KEY,
@@ -56,6 +48,12 @@ def create_table():
             timestamp TEXT
         )"""
     )
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS subreddits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -63,6 +61,15 @@ create_table()
 
 
 SCOPES = "identity read"
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route("/")
@@ -99,13 +106,73 @@ def callback():
         return jsonify(token_response)
 
 
+@app.route("/search_subreddits", methods=["GET"])
+def search_subreddits():
+    access_token = session.get("access_token")
+    if not access_token:
+        return jsonify({"error": "User not logged in"}), 401
+
+    query = request.args.get("query", "").strip()
+    if not query:
+        return jsonify({"error": "No search term provided"}), 400
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "User-Agent": "RedditTrendsApp/0.1"
+    }
+
+    response = requests.get(f"https://oauth.reddit.com/subreddits/search?q={query}&limit=5", headers=headers)
+    data = response.json()
+    if "data" in data:
+        subreddits = [{"name": sub["data"]["display_name"], "title": sub["data"]["title"]} for sub in data["data"]["children"]]
+        return jsonify(subreddits)
+    else:
+        return jsonify({"error": "No results found"}), 404
+
+
+@app.route("/add_subreddit", methods=["POST"])
+def add_subreddit():
+    data = request.json
+    subreddit = data.get("subreddit", "").strip()
+    if not subreddit:
+        return jsonify({"message": "Invalid subreddit name!"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO subreddits (name) VALUES (?)", (subreddit,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": f"Subreddit {subreddit} added successfully!"}), 200
+
+
+@app.route("/remove_subreddit", methods=["POST"])
+def remove_subreddit():
+    data = request.json
+    subreddit = data.get("subreddit", "").strip()
+    if not subreddit:
+        return jsonify({"message": "Invalid subreddit name!"}), 400
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM subreddits WHERE name = ?", (subreddit,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": f"Subreddit r/{subreddit} removed successfully!"}), 200
+
+
 @app.route("/dashboard")
 def dashboard():
     access_token = session.get("access_token")
     if not access_token:
         return redirect("/login")
     
-    subreddits = ["technology", "worldnews", "investing", "cryptocurrency"]
+    conn = get_db_connection()
+    subreddits = [row["name"] for row in conn.execute("SELECT name FROM subreddits").fetchall()]
+    conn.close()
+    
+    if not subreddits:
+        return render_template("dashboard.html", posts=[], message="No subreddits added. Search and add some!")
+    
     trending_posts = []
     for subreddit in subreddits:
         url = f"https://oauth.reddit.com/r/{subreddit}/hot"
@@ -126,7 +193,7 @@ def dashboard():
                     "comments": post["data"]["num_comments"],
                     "permalink": f"https://reddit.com{post['data']['permalink']}"
                 })
-    return render_template("dashboard.html", posts=trending_posts)
+    return render_template("dashboard.html", posts=trending_posts, user_subreddits=subreddits)
 
 
 @app.route("/dashboard/send_alerts", methods=["GET", "POST"])
@@ -145,9 +212,11 @@ def send_alerts():
     else:
         recipient_emails = ["dristantasilwal003@gmail.com"]
 
-    subreddits = ["technology", "worldnews", "investing", "cryptocurrency"]
-    trending_posts = []
+    conn = get_db_connection()
+    subreddits = [row["name"] for row in conn.execute("SELECT name FROM subreddits").fetchall()]
+    conn.close()
     
+    trending_posts = []
     for subreddit in subreddits:
         url = f"https://oauth.reddit.com/r/{subreddit}/hot"
         headers = {
