@@ -2,11 +2,9 @@
 Reddit Trends is a web application built with Flask that allows users to fetch and display trending posts from various subreddits. Users can also receive email alerts with the latest trending posts.
 
 # Demo
-<p align="left">
-  <a href="media/reddit-trends-demo.mp4">
-    <img src="media/bg_img.png" alt="Reddit Trends Demo" width="600">
-  </a>
-</p>
+<video src="https://github.com/user-attachments/assets/86228f9b-0522-423f-a916-5f7094c78811" controls width="600"></video>
+
+
 
 ## Overview
 This is a Flask-based web application that:
