@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Reddit Posts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <!-- Navbar -->
+    <nav class="bg-gray-800 p-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-red-500">🔥 Reddit Trends</a>
+            <div class="space-x-4">
+                <button onclick="toggleEmailForm()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white font-semibold transition">Send Email</button>
+                <a href="/" class="text-gray-300 hover:text-white transition">Log Out</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto py-10">
+        <h1 class="text-3xl font-bold text-center text-red-600 mb-8">🔥 Trending Reddit Posts</h1>
+
+        <!-- Hidden Email Form -->
+        <div id="emailForm" class="hidden bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-3">Send Alerts via Email</h2>
+            <form action="/dashboard/send_alerts" method="post">
+                <label for="emails" class="block text-sm font-medium text-gray-700">Enter recipient emails (comma-separated):</label>
+                <input type="text" id="emails" name="emails" class="mt-1 p-2 w-full border rounded-lg" required>
+                <button type="submit" class="mt-3 w-full bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white font-semibold transition">Send Alerts</button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for post in posts %}
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 flex flex-col h-full">
+                    <h3 class="text-lg font-semibold text-gray-800">{{ post.title }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">Subreddit: <strong class="text-blue-500">r/{{ post.subreddit }}</strong></p>
+                    
+                    <div class="flex justify-between items-center mt-3 mb-4">
+                        <span class="text-green-600 font-medium">⬆️ {{ post.upvotes }} Upvotes</span>
+                        <span class="text-blue-600 font-medium">💬 {{ post.comments }} Comments</span>
+                    </div>
+
+                    <!-- Pushing button to bottom -->
+                    <a href="{{ post.permalink }}" target="_blank" class="mt-auto inline-block px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-300 text-center">
+                        View on Reddit
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function toggleEmailForm() {
+            let form = document.getElementById("emailForm");
+            form.classList.toggle("hidden");
+        }
+    </script>
+</body>
+</html>
