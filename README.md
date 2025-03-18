@@ -18,6 +18,7 @@ This is a Flask-based web application that:
 ## Features
 - User authentication with Reddit OAuth  
 - Fetches trending posts from subreddits using dynamic search (adding and removing)  
+- Fetches job postings from subreddits using random search  
 - Sends email alerts dynamically to user-specified email addresses  
 - Uses **dotenv** to protect API credentials  
 - Supports debugging and testing with **Postman**  

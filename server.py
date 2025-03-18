@@ -7,6 +7,9 @@ from functools import wraps
 from dotenv import load_dotenv
 import os
 
+from jobs import jobs_bp
+
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -253,6 +256,9 @@ def send_email_alert(posts, recipients):
         for post in posts:
             msg.body += f"📌 {post['title']} ({post['upvotes']} upvotes, {post['comments']} comments)\n🔗 {post['permalink']}\n\n"
         mail.send(msg)
+
+
+app.register_blueprint(jobs_bp)
 
 
 if __name__ == "__main__":
